@@ -21,3 +21,9 @@ and time-sensitive systems.
 Comparing to compressing string and my previously experimental HexTypes, this struct 
 serializing method looks more promising and has a plenty of optimization and 
 development room.
+
+## How to use
+
+* Include the header file `serializer.h` in your project. The namespace is `vnet`.
+* For more intuitive examples, you can play with `main.cpp` file to test it for youself.
+* I have made some useful `print` functions for representing bits in hex format.
