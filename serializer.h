@@ -1,20 +1,46 @@
+/*
+ * C++ Struct Serializer-Deserializer
+ *
+ * Source code by Vivatsathorn Thitasirivit
+ *
+ * **Warning**: Arrays in struct is NOT supported for cross-endian network.
+ * If your network has the same endianness (not needing conversion),
+ * you can use arrays.
+ */
+
 #ifndef NETWORK_SERIALIZER_H
 #define NETWORK_SERIALIZER_H
 
-#include <cstdlib>
-#include <cstdint>
-#include <cstdio>
-#include <cstring>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
-#define VNET_DEFAULT_NETWORK_ENDIANNESS vnet::SYS_BIG_ENDIAN
+#define VNET_DEFAULT_NETWORK_ENDIANNESS vnet::SYS_LITTLE_ENDIAN
+
+#define typedef_packed_struct typedef struct __attribute__((packed))
+#define packed_struct struct __attribute__((packed))
 
 namespace vnet {
+    template<typename S, typename... Ts>
+    class Serializer;
+
     typedef enum {
         SYS_BIG_ENDIAN = 0,
         SYS_LITTLE_ENDIAN
     } Endianness;
 
     Endianness get_sys_endianness();
+
+    template<typename S>
+    uint8_t *make_buffer();
+
+    template<typename S>
+    uint8_t *make_buffer_clear();
+
+    void clear_buffer(void *buff, size_t n);
+
+    void rmemcpy(void *dst, const void *src, size_t n);
 
     template<typename T>
     T reverse_bits(T data);
@@ -28,45 +54,94 @@ namespace vnet {
     static Endianness SYSTEM_ENDIANNESS = get_sys_endianness();
     static Endianness NETWORK_ENDIANNESS = SYS_BIG_ENDIAN;
 
-    static void set_network_endianness(Endianness endianness) {
+    static void __set_network_endianness(Endianness endianness) {
         NETWORK_ENDIANNESS = endianness;
     }
 
-    template<typename struct_t>
-    class Payload {
+    namespace {
+        template<typename T>
+        class FuncIter {
+        public:
+            void operator()(uint8_t *dst, size_t &i) const {
+                *(dst + i++) = sizeof(T);
+            }
+        };
+
+        template<template<typename> class F, typename S, typename... Ts>
+        void iter_types(uint8_t *dst, size_t &i) {
+            int dummy[]{(F<Ts>{}(dst, i), 0)...};
+            static_cast<void>(dummy);
+        }
+    }
+
+    template<typename S, typename... Ts>
+    class Serializer {
+    private:
+        size_t _param_count{sizeof...(Ts)};
+        uint8_t *_param_sizes{nullptr};
+        uint8_t *_ser_buf{nullptr};
+        S _deser_buf{};
+
     public:
-        static void serialize_to(uint8_t *dst, const struct_t &src) {
+        Serializer() {
+            _param_sizes = (uint8_t *) malloc((_param_count + 1) * sizeof(uint8_t));
+            *_param_sizes = 0;
+            size_t _i = 1;
+            iter_types<FuncIter, S, Ts...>(_param_sizes, _i);
+        }
+
+        ~Serializer() {
+            free(_param_sizes);
+            free(_ser_buf);
+        }
+
+        void serialize_to(uint8_t *dst, const S &src) {
             if (SYSTEM_ENDIANNESS == NETWORK_ENDIANNESS) {
-                memcpy(dst, &src, size());
+                memcpy((void *) dst, (void *) &src, struct_size());
             } else {
-                struct_t reversed = reverse_bits(src);
-                memcpy(dst, &reversed, size());
+                size_t curr_pos = 0;
+                uint8_t *c_src = (uint8_t *) &src;
+                for (size_t i = 0; i < _param_count; ++i) {
+                    curr_pos += _param_sizes[i];
+                    rmemcpy((void *) (dst + curr_pos), (void *) (c_src + curr_pos), _param_sizes[i + 1]);
+                }
             }
         }
 
-        static uint8_t *serialize(const struct_t &src) {
-            uint8_t *tmp = (uint8_t *) malloc(size());
-            serialize_to(tmp, src);
-            return tmp;
+        uint8_t *serialize(const S &src) {
+            _ser_buf = make_buffer_clear<S>();
+            serialize_to(_ser_buf, src);
+            return _ser_buf;
         }
 
-        static void deserialize_to(struct_t &dst, uint8_t *src, size_t n = sizeof(struct_t)) {
+        void deserialize_to(S &dst, const uint8_t *src, size_t n = sizeof(S)) {
             if (SYSTEM_ENDIANNESS == NETWORK_ENDIANNESS) {
                 memcpy(&dst, src, n);
             } else {
-                struct_t tmp = reverse_bits(*((struct_t *) src));
-                memcpy(&dst, &tmp, n);
+                size_t curr_pos = 0;
+                uint8_t *c_dst = (uint8_t *) &dst;
+                for (size_t i = 0; i < _param_count; ++i) {
+                    curr_pos += _param_sizes[i];
+                    rmemcpy((void *) (c_dst + curr_pos), (void *) (src + curr_pos), _param_sizes[i + 1]);
+                }
             }
         }
 
-        static struct_t deserialize(uint8_t *src) {
-            struct_t tmp;
-            deserialize_to(tmp, src);
-            return tmp;
+        S deserialize(const uint8_t *src) {
+            deserialize_to(_deser_buf, src);
+            return _deser_buf;
         }
 
-        static constexpr size_t size() {
-            return sizeof(struct_t);
+        constexpr size_t struct_size() const {
+            return sizeof(S);
+        }
+
+        constexpr size_t param_count() const {
+            return _param_count;
+        }
+
+        uint8_t *param_sizes() const {
+            return _param_sizes;
         }
     };
 
@@ -76,10 +151,18 @@ namespace vnet {
         return *byte_arr ? SYS_LITTLE_ENDIAN : SYS_BIG_ENDIAN;
     }
 
-    template<typename T>
-    T reverse_bits(T data) {
-        T result = {0};
-        size_t n = sizeof(T) / sizeof(uint8_t);
+    void rmemcpy(void *dst, const void *src, size_t n) {
+        uint8_t *c_dst = (uint8_t *) dst;
+        uint8_t *c_src = (uint8_t *) src + n - 1;
+        while (n--) {
+            *c_dst++ = *c_src--;
+        }
+    }
+
+    template<typename S>
+    S reverse_bits(S data) {
+        S result = {0};
+        size_t n = sizeof(S) / sizeof(uint8_t);
         uint8_t *c_data = (uint8_t *) &data;
         uint8_t *tmp = (uint8_t *) &result;
 
@@ -91,7 +174,7 @@ namespace vnet {
             }
         }
 
-        return *((T *) tmp);
+        return *((S *) tmp);
     }
 
     template<typename T>
@@ -109,8 +192,8 @@ namespace vnet {
         printf("(HIGH ADDR)\n");
     }
 
-    template<typename T>
-    void print(T *data, size_t size) {
+    template<typename S>
+    void print(S *data, size_t size) {
         uint8_t *data_r = (uint8_t *) data;
         printf("DATA | ");
         for (size_t i = 0; i < size; ++i)
@@ -124,22 +207,44 @@ namespace vnet {
         printf("(HIGH ADDR)\n");
     }
 
-    void hr(size_t n) {
+    template<typename S>
+    uint8_t *make_buffer() {
+        return (uint8_t *) malloc(sizeof(S));
+    }
+
+    template<typename S>
+    uint8_t *make_buffer_clear() {
+        return (uint8_t *) calloc(1, sizeof(S));
+    }
+
+    void clear_buffer(void *buff, size_t n) {
+        memset(buff, 0, n);
+    }
+
+    void hrx(char c, size_t n = 50) {
         while (--n)
-            printf("-");
+            printf("%c", c);
         printf("\n");
     }
 
-    void hrd(size_t n) {
-        while (--n)
-            printf("=");
-        printf("\n");
+    void hr(size_t n = 50) {
+        hrx('-', n);
     }
 
-    void hrt(size_t n) {
-        while (--n)
-            printf("~");
-        printf("\n");
+    void hrb(size_t n = 50) {
+        hrx('#', n);
+    }
+
+    void hrd(size_t n = 50) {
+        hrx('=', n);
+    }
+
+    void hrt(size_t n = 50) {
+        hrx('~', n);
+    }
+
+    void hrp(size_t n = 50) {
+        hrx('+', n);
     }
 }
 

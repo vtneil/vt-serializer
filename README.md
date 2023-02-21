@@ -2,7 +2,7 @@
 
 A C++ struct serializer for transmitting structure of data over the network in the 
 same standard. The struct is serialized in network endianness, similar to how 
-`htonl`, `htons`, `ntohl`, and `ntohs` work, but rather dynamic in size.
+`htonl`, `htons`, `ntohl`, and `ntohs` work, but rather dynamic in struct_size.
 
 On the receiver end, the data is, then, deserialized into the struct.
 
