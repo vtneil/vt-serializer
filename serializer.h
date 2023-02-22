@@ -46,10 +46,10 @@ namespace vnet {
     T reverse_bits(T data);
 
     template<typename T>
-    void print(const T &data, size_t size = sizeof(T));
+    void printb(const T &data, size_t size = sizeof(T));
 
     template<typename T>
-    void print(T *data, size_t size);
+    void printb(T *data, size_t size);
 
     static Endianness SYSTEM_ENDIANNESS = get_sys_endianness();
     static Endianness NETWORK_ENDIANNESS = SYS_BIG_ENDIAN;
@@ -132,6 +132,10 @@ namespace vnet {
             return _deser_buf;
         }
 
+        constexpr size_t buffer_size() const {
+            return sizeof(uint8_t) * struct_size();
+        }
+
         constexpr size_t struct_size() const {
             return sizeof(S);
         }
@@ -178,7 +182,7 @@ namespace vnet {
     }
 
     template<typename T>
-    void print(const T &data, size_t size) {
+    void printb(const T &data, size_t size) {
         uint8_t *data_r = (uint8_t *) &data;
         printf("DATA | ");
         for (size_t i = 0; i < size; ++i)
@@ -193,7 +197,7 @@ namespace vnet {
     }
 
     template<typename S>
-    void print(S *data, size_t size) {
+    void printb(S *data, size_t size) {
         uint8_t *data_r = (uint8_t *) data;
         printf("DATA | ");
         for (size_t i = 0; i < size; ++i)

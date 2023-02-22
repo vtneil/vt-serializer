@@ -26,4 +26,4 @@ development room.
 
 * Include the header file `serializer.h` in your project. The namespace is `vnet`.
 * For more intuitive examples, you can play with `main.cpp` file to test it for youself.
-* I have made some useful `print` functions for representing bits in hex format.
+* I have made some useful `printb` functions for representing bits in hex format.

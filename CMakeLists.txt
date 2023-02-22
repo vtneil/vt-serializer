@@ -5,4 +5,4 @@ set(CMAKE_CXX_STANDARD 11)
 
 add_executable(test benchmark/benchmark.cpp)
 add_executable(benchmark benchmark/benchmark.cpp)
-add_executable(build_serializer build_serializer.cpp)
+add_executable(build_serializer example.cpp)

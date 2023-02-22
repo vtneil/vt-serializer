@@ -60,5 +60,5 @@ int main() {
     stop = clock();
     elapsed = (double) (stop - start) / CLOCKS_PER_SEC;
     printf("Deserialization used %lf s\n", elapsed);
-    print(d);
+    printb(d);
 }
