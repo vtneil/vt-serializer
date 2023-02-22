@@ -12,9 +12,6 @@ the systems support it.
 **Warning**: I'm not sure about the data padding on different system as it hasn't been 
 tested yet. You can try it, but I'm quite sure it would work.
 
-For more compression, you can pack the structure using `#pragma pack(1)` to tell the 
-compiler to not pad the data, but use 1-byte packaging.
-
 The target of usages is on microcontrollers, bandwidth-limited systems, 
 and time-sensitive systems.
 
