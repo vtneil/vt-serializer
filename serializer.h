@@ -88,6 +88,7 @@ namespace vnet {
             *_param_sizes = 0;
             size_t _i = 1;
             iter_types<FuncIter, S, Ts...>(_param_sizes, _i);
+            _ser_buf = make_buffer_clear<S>();
         }
 
         ~Serializer() {
@@ -109,7 +110,6 @@ namespace vnet {
         }
 
         uint8_t *serialize(const S &src) {
-            _ser_buf = make_buffer_clear<S>();
             serialize_to(_ser_buf, src);
             return _ser_buf;
         }
