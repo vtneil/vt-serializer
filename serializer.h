@@ -18,8 +18,8 @@
 
 #define VNET_DEFAULT_NETWORK_ENDIANNESS vnet::SYS_LITTLE_ENDIAN
 
-#define typedef_packed_struct typedef struct __attribute__((packed))
 #define packed_struct struct __attribute__((packed))
+#define typedef_packed_struct typedef packed_struct
 
 namespace vnet {
     template<typename S, typename... Ts>
@@ -147,6 +147,21 @@ namespace vnet {
         uint8_t *param_sizes() const {
             return _param_sizes;
         }
+
+        /*
+         * For converting to CSV format Arduino String, not implemented yet.
+         */
+#ifdef Arduino_h
+        String toCSV() {
+            String ret = "";
+            ret.reserve(4 * buffer_size());
+            size_t curr_pos = 0;
+            for (size_t i = 0; i < _param_count; ++i) {
+                curr_pos += _param_sizes[i];
+                ret += String() + ",";
+            }
+        }
+#endif
     };
 
     Endianness get_sys_endianness() {
@@ -252,4 +267,4 @@ namespace vnet {
     }
 }
 
-#endif //NETWORK_SERIALIZER_H
+#endif  //NETWORK_SERIALIZER_H

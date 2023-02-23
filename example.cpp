@@ -75,6 +75,9 @@ int main() {
     /*
      * Try printing the byte order (or send data to network)
      */
+    printf("Sender Device (Original struct bytes)\n");
+    printb(payload);
+    hr();
     printf("Sender Device (Serialized bytes)\n");
     printb(buf1, serializer.buffer_size());
     hrb();
