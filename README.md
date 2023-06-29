@@ -1,26 +1,25 @@
-# vnet_serializer
+# VT C++ Serializer/Deserializer Library
 
-A C++ struct serializer for transmitting structure of data over the network in the 
-same standard. The struct is serialized in network endianness, similar to how 
-`htonl`, `htons`, `ntohl`, and `ntohs` work, but rather dynamic in struct_size.
+This is a simple implementation for easy serialization of `struct`/`packed_struct` of data 
+without having user managing heap (dynamic) memory.
 
-On the receiver end, the data is, then, deserialized into the struct.
+User has to beware of platform and microcontroller difference between transmitter and receiver. 
+This is just a basic tool for ease of use.
 
-The user can define any length and any combination of struct of data types as long as
-the systems support it.
+## Installation
 
-**Warning**: I'm not sure about the data padding on different system as it hasn't been 
-tested yet. You can try it, but I'm quite sure it would work.
+### General Installation
 
-The target of usages is on microcontrollers, bandwidth-limited systems, 
-and time-sensitive systems.
+1. Copy header files from *include* folder to your include folder.
+2. `#include "vt_serializer"` for library and tools.
+3. See *examples* folder for further usages.
+4. See *test* folder for testing and usages.
 
-Comparing to compressing string and my previously experimental HexTypes, this struct 
-serializing method looks more promising and has a plenty of optimization and 
-development room.
+### PlatformIO
 
-## How to use
+See [vt-serializer registry](https://registry.platformio.org/libraries/vtneil/vt-serializer) on PlatformIO for further
+instructions.
 
-* Include the header file `serializer.h` in your project. The namespace is `vnet`.
-* For more intuitive examples, you can play with `main.cpp` file to test it for youself.
-* I have made some useful `printb` functions for representing bits in hex format.
+## Documentation
+
+To read documentation, visit [https://vt.in.th/docs/vt-serializer/index.html](https://vt.in.th/docs/vt-serializer/index.html).
