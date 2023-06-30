@@ -1,6 +1,6 @@
 {
     "name": "vt-serializer",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "VT Serializer/Deserializer",
     "keywords": "serializer, deserializer",
     "repository": {
@@ -18,5 +18,14 @@
     "license": "MIT",
     "homepage": "https://vt.in.th/docs/vt-serializer/index.html",
     "frameworks": "*",
-    "platforms": "*"
+    "platforms": "*",
+    "export": {
+        "include": [
+            "docs/*",
+            "examples/*",
+            "include/*",
+            "test/*",
+            "README.md"
+        ]
+    }
 }
