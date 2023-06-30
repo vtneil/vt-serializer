@@ -1,6 +1,6 @@
 {
     "name": "vt-serializer",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "VT Serializer/Deserializer",
     "keywords": "serializer, deserializer",
     "repository": {
